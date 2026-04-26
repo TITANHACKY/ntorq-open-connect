@@ -1,0 +1,46 @@
+# APK files (don't commit the TVS Connect APK)
+*.apk
+*.aab
+
+# Decompiled APK output (too large, contains TVS code)
+tvs_connect_decompiled/
+*.jadx/
+
+# Raw HCI captures (may contain personal data — sanitize before committing)
+*.log.raw
+*.unsanitized
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Android build
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/*.keystore
+android/*.jks
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+
+# MobSF output
+mobsf-report/
+uploads/
+
+# Personal notes (keep your own notes out of commits)
+PERSONAL_NOTES.md
+TODO_private.md
