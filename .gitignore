@@ -12,11 +12,16 @@ tvs_connect_decompiled/
 
 # Python
 __pycache__/
+**/__pycache__/
 *.pyc
 *.pyo
 .venv/
 venv/
+poc/python/venv/
 *.egg-info/
+
+# Telemetry logs captured during testing
+poc/python/telemetry_*.csv
 
 # Android build
 android/.gradle/
@@ -44,3 +49,6 @@ uploads/
 # Personal notes (keep your own notes out of commits)
 PERSONAL_NOTES.md
 TODO_private.md
+
+# Device credentials — never commit your actual .env
+.env

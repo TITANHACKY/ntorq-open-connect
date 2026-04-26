@@ -37,17 +37,48 @@ The TVS Connect app for NTorq SmartXonnect is frustratingly unreliable — auto-
 ```
 ntorq-open-connect/
 ├── research/
-│   ├── captures/          # Wireshark / HCI snoop captures (sanitized)
-│   ├── jadx-findings/     # Decompilation findings from official APK
-│   ├── frida-scripts/     # Frida hooks for live protocol capture
-│   └── PROTOCOL.md        # Decoded protocol documentation (WIP)
+│   ├── captures/               # Wireshark / HCI snoop captures (sanitized)
+│   ├── jadx-findings/          # Decompilation findings from official APK
+│   ├── frida-scripts/          # Frida hooks for live protocol capture
+│   ├── protocol_analysis.md    # Decoded protocol documentation
+│   └── quick_reference.txt     # Protocol quick reference card
 ├── poc/
-│   └── python/            # Python Bleak proof-of-concept connector
-├── android/               # OpenTorq Android app (Kotlin + Compose)
+│   └── python/                 # Python Bleak proof-of-concept connector
+├── android/                    # OpenTorq Android app (Kotlin + Compose)
 ├── docs/
-│   ├── RE_GUIDE.md        # Step-by-step reverse engineering guide
-│   └── LEGAL.md           # Legal analysis (India Copyright Act §52)
+│   ├── re_guide.md             # Step-by-step reverse engineering guide
+│   └── legal.md                # Legal analysis (India Copyright Act §52)
+├── .env.sample                 # Template for device credentials
 └── CONTRIBUTING.md
+```
+
+---
+
+## Getting Started
+
+### 1. Configure your device credentials
+
+Your bike's BLE device name and MAC address are personal to your device. They are **not** committed to this repo.
+
+```bash
+cp .env.sample .env
+```
+
+Then edit `.env` and fill in your own values (find them via [nRF Connect](https://www.nordicsemi.com/Products/Development-tools/nRF-Connect-for-mobile)):
+
+```env
+NTORQ_DEVICE_NAME=TVST0XXXXXX   # Your bike's BLE name
+NTORQ_DEVICE_MAC=XX:XX:XX:XX:XX:XX  # Your bike's MAC address
+```
+
+### 2. Run the Python PoC
+
+```bash
+cd poc/python
+python3 -m venv venv
+source venv/bin/activate        # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+python ntorq_connector.py
 ```
 
 ---
@@ -55,11 +86,11 @@ ntorq-open-connect/
 ## Current Status
 
 - [x] Project setup and documentation
-- [ ] APK decompilation (jadx) — UUID extraction
-- [ ] Live GATT enumeration (nRF Connect)
+- [x] APK decompilation (jadx) — UUID extraction
+- [x] Live GATT enumeration (nRF Connect)
 - [ ] HCI Snoop Log captures
-- [ ] Frame format decoded
-- [ ] Checksum algorithm identified
+- [x] Frame format decoded
+- [x] Checksum algorithm identified
 - [ ] Python PoC connector working
 - [ ] Android app scaffold
 - [ ] Auto-connect working

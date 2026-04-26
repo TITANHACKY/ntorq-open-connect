@@ -1,0 +1,151 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                                                                            ║
+║              NTorq XT SmartXonnect BLE Protocol - Quick Reference          ║
+║                                                                            ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+┌─ SERVICE UUID ─────────────────────────────────────────────────────────────┐
+│ 5456534d-5647-5341-5342-454e544f5251                                      │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌─ CHARACTERISTICS ──────────────────────────────────────────────────────────┐
+│ RX (FROM BIKE - Telemetry)                                               │
+│   UUID: 00005354-0000-1000-8000-00805f9b34fb                             │
+│   Properties: NOTIFY, WRITE                                             │
+│                                                                          │
+│ TX (TO BIKE - Commands)                                                │
+│   UUID: 00005352-0000-1000-8000-00805f9b34fb                           │
+│   Properties: WRITE NO RESPONSE                                        │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌─ FRAME FORMAT ─────────────────────────────────────────────────────────────┐
+│                                                                            │
+│   [0x5A] [OPCODE] [ENCRYPTED_DATA] [CHECKSUM] [0xFF]                     │
+│    1B      1B       variable       1B         1B                         │
+│   Start   Command   XOR with 0xEA  255 mod    End                        │
+│                                    (sum mod   Marker                     │
+│                                     256)                                 │
+│                                                                            │
+│ Example: 5A A5 64 01 86 9F 46 64 23 64 96 01 02 64 00 00 2E E0 FF      │
+│          └─ ──┘ └─ ────────────────────────────────┘ └─ ──┘ ──┘       │
+│          Start  Opcode   Encrypted Payload    Checksum  End            │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌─ ENCRYPTION/DECRYPTION ────────────────────────────────────────────────────┐
+│                                                                            │
+│   encrypted_byte = plaintext_byte XOR 0xEA                               │
+│   plaintext_byte = encrypted_byte XOR 0xEA                              │
+│                                                                            │
+│ Example:                                                                 │
+│   plaintext:  0x64  (100 decimal)                                       │
+│   XOR 0xEA:   ----                                                      │
+│   result:     0x8E  (142 decimal)                                       │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌─ CHECKSUM CALCULATION ─────────────────────────────────────────────────────┐
+│                                                                            │
+│   1. Sum all bytes from [0x5A] to end of encrypted data                  │
+│   2. checksum = 255 - (sum % 256)                                        │
+│   3. Append checksum and 0xFF to frame                                   │
+│                                                                            │
+│ Python:                                                                  │
+│   total = sum(frame_bytes)                                              │
+│   checksum = 255 - (total % 256)                                        │
+│   complete_frame = frame_bytes + bytes([checksum, 0xFF])                │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌─ KNOWN OPCODES ────────────────────────────────────────────────────────────┐
+│                                                                            │
+│ 0xA5  Heartbeat/Ping                                                    │
+│ 0xF1  Caller ID Event                                                   │
+│ 0x53  Profile/Document Transfer Start                                   │
+│ 0xEF  Image/Data Chunk Transfer                                         │
+│                                                                            │
+│ (More opcodes exist, send HCI snoop traffic for full mapping)           │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌─ DEVICE INFORMATION ───────────────────────────────────────────────────────┐
+│                                                                            │
+│ Device Name:  <YOUR_DEVICE_NAME>                                              │
+│ MAC Address:  <YOUR_MAC_ADDRESS>                                         │
+│ Service UUID: 5456534d-5647-5341-5342-454e544f5251                      │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌─ PYTHON QUICK START ───────────────────────────────────────────────────────┐
+│                                                                            │
+│   from ntorq_protocol import NTorqProtocol                               │
+│                                                                            │
+│   # Create heartbeat frame                                              │
+│   heartbeat = NTorqProtocol.make_frame(opcode=0xA5, payload=b'')        │
+│   # Result: bytes([0x5A, 0xA5, <checksum>, 0xFF])                       │
+│                                                                            │
+│   # Parse incoming frame                                                │
+│   parsed = NTorqProtocol.parse_frame(incoming_data)                     │
+│   # Result: {                                                           │
+│   #   'valid': True/False,                                             │
+│   #   'opcode': 0xA5,                                                  │
+│   #   'payload': decrypted_bytes,                                      │
+│   #   'checksum': checksum_value                                       │
+│   # }                                                                   │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌─ KOTLIN/ANDROID QUICK START ───────────────────────────────────────────────┐
+│                                                                            │
+│   // Create heartbeat frame                                             │
+│   val heartbeat = NTorqProtocol.makeFrame(opcode = 0xA5)                │
+│   bluetoothGatt.writeCharacteristic(txChar, heartbeat)                  │
+│                                                                            │
+│   // Handle incoming frame                                              │
+│   val parsed = NTorqProtocol.parseFrame(data)                           │
+│   if (parsed.valid) {                                                   │
+│       val speed = extracted_from(parsed.payload)                        │
+│   }                                                                      │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌─ FILES TO READ ────────────────────────────────────────────────────────────┐
+│                                                                            │
+│ PROTOCOL_ANALYSIS.md          ← Technical protocol specification         │
+│ NTORQ_XT_UUIDS_EXTRACTED.md   ← Hardware UUIDs & GATT database           │
+│ NEXT_STEP_PYTHON_POC.md       ← Python PoC implementation guide         │
+│ README_FINDINGS.md             ← Overall project summary                 │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌─ IMPLEMENTATION CHECKLIST ─────────────────────────────────────────────────┐
+│                                                                            │
+│ Protocol (Code from Decompilation)                                       │
+│   ☑ Frame format identified                                             │
+│   ☑ XOR encryption (0xEA key)                                           │
+│   ☑ Checksum algorithm (255 - sum%256)                                  │
+│                                                                            │
+│ Hardware (UUIDs from nRF Connect)                                        │
+│   ☑ Service UUID found                                                  │
+│   ☑ RX characteristic (0x5354) identified                               │
+│   ☑ TX characteristic (0x5352) identified                               │
+│   ☑ Properties confirmed (NOTIFY, WRITE)                                │
+│                                                                            │
+│ Python PoC                                                               │
+│   ☐ NTorqProtocol class created                                         │
+│   ☐ NTorqConnector class created                                        │
+│   ☐ Connect to real bike                                                │
+│   ☐ Receive & parse telemetry                                           │
+│   ☐ Send heartbeat command                                              │
+│                                                                            │
+│ Android App                                                              │
+│   ☐ Create Gradle project                                               │
+│   ☐ Port NTorqProtocol to Kotlin                                        │
+│   ☐ BLE service + connection logic                                      │
+│   ☐ Dashboard UI                                                        │
+│   ☐ Live speed/RPM display                                              │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+Generated: 2026-04-26
+Status: ✓ READY TO IMPLEMENT
